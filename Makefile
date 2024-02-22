@@ -1,71 +1,86 @@
-NAME	:= minishell
+NAME = minishell
 
-CC		:= gcc
-INCLUDE	:= ./libraries
-CFLAGS	:= -ggdb -I $(INCLUDE) -I ./libft
-LIBFT	= libft
-FLAGS	= -Wall -Wextra -Werror
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -g
 
-SRCDIR	:= src
-SRC		:= src/utils/ft_fill_env.c \
-			src/utils/input_checker.c \
-			src/parser/ft_trim_quotes.c \
-			src/parser/parser_utils.c \
-			src/parser/parser.c \
-			src/parser/subsplit.c \
-			src/init_and_termiante/free_functs.c \
-			src/init_and_termiante/ft_banner.c \
-			src/init_and_termiante/ft_error.c \
-			src/init_and_termiante/ft_exit.c \
-			src/init_and_termiante/ft_signal.c \
-			src/fill_block/fill_block.c \
-			src/fill_block/fill_blocks_utils.c \
-			src/fill_block/fill_blocks_utils2.c \
-			src/fill_block/heredocfile.c \
-			src/expander/expander.c \
-			src/expander/expander_utils.c \
-			src/executer/ft_execute.c \
-			src/executer/get_path.c \
-			src/built_in/ft_cd.c \
-			src/built_in/ft_echo.c \
-			src/built_in/ft_env.c \
-			src/built_in/ft_export.c \
-			src/built_in/ft_pwd.c \
-			src/built_in/ft_unset.c \
-			src/built_in/ft_exit_b.c \
-			src/built_in/built_in_utils.c \
-			src/main.c
+SRC_DIR = srcs/executer
+EXPANDER_DIR = srcs/expander
+LEXER_DIR = srcs/lexer
+PARSER_DIR = srcs/parser
+UTILS_DIR = srcs/utils
+SRCS = srcs/main.c \
+       $(SRC_DIR)/builtin.c \
+       $(SRC_DIR)/cd.c \
+       $(SRC_DIR)/childprocess.c \
+       $(SRC_DIR)/env.c \
+       $(SRC_DIR)/errors.c \
+       $(SRC_DIR)/executer.c \
+       $(SRC_DIR)/export_append.c \
+       $(SRC_DIR)/export_builtin.c \
+       $(SRC_DIR)/export_utils.c \
+       $(SRC_DIR)/fds.c \
+       $(SRC_DIR)/heredoc.c \
+       $(SRC_DIR)/path_finder.c \
+       $(SRC_DIR)/pipes.c \
+       $(SRC_DIR)/pwd_utils.c \
+       $(SRC_DIR)/signals.c \
+       $(SRC_DIR)/unset.c \
+       $(EXPANDER_DIR)/expander_utils.c \
+       $(EXPANDER_DIR)/expander.c \
+       $(LEXER_DIR)/lexer_split.c \
+       $(LEXER_DIR)/lexer_utils.c \
+       $(LEXER_DIR)/lexer.c \
+       $(PARSER_DIR)/parser.c \
+       $(PARSER_DIR)/parser_utils.c \
+       $(PARSER_DIR)/prelim_parser_utils.c \
+       $(PARSER_DIR)/prelim_parser.c \
+       $(UTILS_DIR)/atollong.c \
+       $(UTILS_DIR)/bubble_sort.c \
+       $(UTILS_DIR)/exec_utils.c \
+       $(UTILS_DIR)/free.c \
+       $(UTILS_DIR)/free2.c \
+       $(UTILS_DIR)/list_utils.c \
+       $(UTILS_DIR)/string_utils.c \
+       $(UTILS_DIR)/node_mem.c \
 
-OBJDIR	:= ./objectives
-OBJ		:= $(SRC:%.c=$(OBJDIR)/%.o)
+OBJ = $(SRCS:.c=.o)
+
+LIBFT_DIR = srcs/42lib/libft
+
+LIBS = -L$(LIBFT_DIR) -lft -lreadline -lhistory
+
+INCLUDES = -I$(LIBFT_DIR) -I$(SRC_DIR) -I$(EXPANDER_DIR) -I$(LEXER_DIR) -I$(PARSER_DIR) -I$(UTILS_DIR)
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	make -C $(LIBFT)
-	cp libft/libft.a .
-	@$(CC) -L /usr/local/Cellar/readline/8.2.1/include -I /usr/local/Cellar/readline/8.2.1/include $(FLAGS) $(CFLAGS) $(OBJ) libft.a -lreadline -o $@
+	@make -C $(LIBFT_DIR) re
+	@$(CC) $(CFLAGS) $(OBJ) $(LIBS) -o $(NAME)
 
-$(OBJDIR)/%.o: %.c
-	@mkdir -p $(@D)
-	$(CC) -I ~/.brew/opt/readline/include -I /usr/local/Cellar/readline/8.2.1/include $(FLAGS) $(CFLAGS) -c $< -o $@
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(EXPANDER_DIR)/%.o: $(EXPANDER_DIR)/%.c
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(LEXER_DIR)/%.o: $(LEXER_DIR)/%.c
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(PARSER_DIR)/%.o: $(PARSER_DIR)/%.c
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(UTILS_DIR)/%.o: $(UTILS_DIR)/%.c
+	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	make clean -C $(LIBFT)
-	rm -rf libft.a
-	@rm -rf $(OBJDIR)
+	@make -C $(LIBFT_DIR) clean
+	@rm -f $(OBJ)
+	@find srcs -name "*.o" -type f -delete
 
-fclean:
-	make fclean -C $(LIBFT)
-	rm -rf libft.a
-	@rm -rf $(OBJDIR)
+fclean: clean
+	@make -C $(LIBFT_DIR) fclean
 	@rm -f $(NAME)
 
-valgrind:
-	valgrind --leak-check=full --show-leak-kinds=definite ./$(NAME)
+re: fclean all
 
-norm:
-	norminette libft
-	norminette src
-
-re:	fclean all
+.PHONY: all clean fclean re
